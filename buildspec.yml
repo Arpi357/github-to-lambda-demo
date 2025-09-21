@@ -30,11 +30,7 @@ phases:
       - echo "Confirming upload..."
       - aws s3 ls s3://lambdas-buildss-zip/deployment_package.zip
       - echo "Updating Lambda function..."
-      - aws lambda update-function-code \
-          --function-name github-to-lambda-cicid \
-          --s3-bucket lambdas-buildss-zip \
-          --s3-key deployment_package.zip \
-          --region ap-south-1
+      - aws lambda update-function-code --function-name github-to-lambda-cicid --s3-bucket lambdas-buildss-zip --s3-key deployment_package.zip --region ap-south-1
       - echo "Deployment complete!"
 
 artifacts:
