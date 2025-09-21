@@ -12,7 +12,7 @@ phases:
   build:
     commands:
       - echo "Packaging Lambda function..."
-      - cp lambda_functions.py package/
+      - cp lambda_functions.py package/   # Make sure the filename matches your repo
       - cd package
       - zip -r ../deployment_package.zip .
       - cd ..
@@ -28,4 +28,15 @@ phases:
       - echo "Uploading deployment package to S3..."
       - aws s3 cp deployment_package.zip s3://lambdas-buildss-zip/ --region ap-south-1
       - echo "Confirming upload..."
-      - aws s3 ls s3://lambdas-buildss-zip/deployment_package.z_
+      - aws s3 ls s3://lambdas-buildss-zip/deployment_package.zip
+      - echo "Updating Lambda function..."
+      - aws lambda update-function-code \
+          --function-name github-to-lambda-cicid \
+          --s3-bucket lambdas-buildss-zip \
+          --s3-key deployment_package.zip \
+          --region ap-south-1
+      - echo "Deployment complete!"
+
+artifacts:
+  files:
+    - deployment_package.zip
