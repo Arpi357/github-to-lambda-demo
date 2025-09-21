@@ -5,8 +5,13 @@ phases:
     runtime-versions:
       python: 3.11
     commands:
-      - echo "Installing dependencies..."
+      - echo "Installing dependencies to package/ ..."
       - pip install -r requirements.txt -t package/
+      - echo "Installing latest AWS CLI..."
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - unzip awscliv2.zip
+      - sudo ./aws/install
+      - aws --version
 
   build:
     commands:
@@ -15,16 +20,28 @@ phases:
       - cd package
       - zip -r ../deployment_package.zip .
       - cd ..
+      - echo "Package size:"
+      - ls -lh deployment_package.zip
 
   post_build:
     commands:
-      - echo "Checking AWS credentials..."
+      - echo "Checking AWS identity..."
       - aws sts get-caller-identity
-      - echo "Listing objects in S3 bucket..."
+      - echo "Listing objects in bucket before upload..."
       - aws s3 ls s3://lambdas-buildss-zip/
-      - echo "Listing Lambda functions..."
-      - aws lambda list-functions --region ap-south-1
       - echo "Uploading deployment package to S3..."
       - aws s3 cp deployment_package.zip s3://lambdas-buildss-zip/ --region ap-south-1
+      - echo "Confirming upload..."
+      - aws s3 ls s3://lambdas-buildss-zip/deployment_package.zip
+      - echo "Waiting 5 seconds for S3 consistency..."
+      - sleep 5
+      - echo "Listing Lambda functions..."
+      - aws lambda list-functions --region ap-south-1
       - echo "Updating Lambda function..."
+      - set -x   # show command execution
+      - aws lambda update-function-code \
+          --function-name github-to-lambda-cicid \
+          --s3-bucket lambdas-buildss-zip \
+          --s3-key deployment_package.zip \
+          --region ap-south-1
       - echo "Deployment complete!"
